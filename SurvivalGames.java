@@ -25,8 +25,11 @@ import net.minecraft.server.v1_9_R1.BlockPosition;
 public class SurvivalGames extends JavaPlugin implements Listener {
 	private static SurvivalGames plugin;
 	ArrayList<Location> blocks = new ArrayList<>();
+	/*Aufgelistete positionen der Kisten, erstellt durch einmaliges Rechtsklicken*/
 	HashMap<Location, Inventory> inventory = new HashMap<>();
+	/*Die Inventare, aufgespalten in die Locations*/
 	HashMap<String, Location> openChest = new HashMap<>();
+	/*Speichert, welcher Spieler gerade an welchem Ort eine Kiste öffnet*/
 
 	public static SurvivalGames getInstance() {
 		return plugin;
@@ -41,7 +44,8 @@ public class SurvivalGames extends JavaPlugin implements Listener {
 
 	@Override
 	public void onDisable() {
-
+		/*!!WICHTIG!!*/
+		/*Es muss noch umgesetzt werden, dass die Inventare upgedatet werden! Dass, damit auch mehrere Spieler darauf zugreifen können*/
 	}
 
 	@EventHandler
@@ -53,9 +57,11 @@ public class SurvivalGames extends JavaPlugin implements Listener {
 		if(a.equals(Action.RIGHT_CLICK_BLOCK) && b.getType().equals(Material.CHEST)){
 			openChest.put(p.getName(), b.getLocation());
 			if(blocks.contains(b.getLocation())){
+				/*Der Zugriff, nach dem erstellen(Füllen) der Truhe*/
 				Inventory inv = inventory.get(b.getLocation());
 				p.openInventory(inv);
 			}else{
+				/*Hier wird die Truhe gefüllt*/
 				blocks.add(b.getLocation());
 				Inventory inv = p.getServer().createInventory(null, 27,"§8Truhe");
 				inv.setItem(0, new ItemStack(Material.DIAMOND));
@@ -63,6 +69,7 @@ public class SurvivalGames extends JavaPlugin implements Listener {
 				inventory.put(b.getLocation(), inv);
 			}
 			e.setCancelled(true);
+			/*Der "öffnen" Sound wird abgespielt und die Truhe wird per Packets geöffnet*/
 			((CraftWorld) b.getWorld()).getHandle().playBlockAction(
 									new BlockPosition(b.getX(),  b.getY(),  b.getZ()),
 									CraftMagicNumbers.getBlock(b), 1, 1);
@@ -81,11 +88,13 @@ public class SurvivalGames extends JavaPlugin implements Listener {
 		Location loc = openChest.get(p.getName());
 		Location laci = new Location(Bukkit.getWorld("world"), loc.getX()+0.5, loc.getY()+1, loc.getZ()+0.5);
 		Block b = Bukkit.getWorld("world").getBlockAt(loc);
+		/*Die Kiste wird per Packets geschlossen*/
 		 ((CraftWorld) b.getWorld()).getHandle().playBlockAction(
 					new BlockPosition(b.getX(),  b.getY(),  b.getZ()),
 					CraftMagicNumbers.getBlock(b), 1, 0);
 		openChest.remove(p.getName());
         inventory.put(loc, inv);
+                           /*!!!!!Das da unten würde den Inhalt des Inventars droppen!!!!!*/
        /* ItemStack[] gi = inv.getContents();
         for(ItemStack f : gi){
         	if(f != null){
@@ -100,6 +109,7 @@ public class SurvivalGames extends JavaPlugin implements Listener {
 	public void breakEvent(BlockBreakEvent e) {
 		Player p = (Player) e.getPlayer();
 		Location loc = e.getBlock().getLocation();
+		/*Die Methode droppt nur die Items des Invs, bei zerstörung durch EINEN SPIELER! Sonst nicht!*/
 		Location laci = new Location(Bukkit.getWorld("world"), loc.getX()+0.5, loc.getY()+1, loc.getZ()+0.5);
 		Inventory inv = inventory.get(loc);
 		Block b = e.getBlock();
